@@ -3,9 +3,15 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 import logging
 from datetime import datetime
 import random
+from dotenv import load_dotenv
+import os
+from telegram.error import TelegramError
 
-# Token
-token = "tokenXYZ"
+load_dotenv()  # Load variables from the .env file
+token = os.getenv("BOT_TOKEN")
+if not token:
+    logging.critical("BOT_TOKEN not found. Exiting application.")
+    exit(1)
 
 # Configure logging to log to a file
 logging.basicConfig(
@@ -23,13 +29,18 @@ application = Application.builder().token(token).build()
 
 async def log_interaction(update: Update, response: str = None):
     user = update.effective_user
-    username = user.username if user.username else "Unknown"
-    user_text = update.message.text
+    username = user.username if user and user.username else "Unknown"
+    user_text = update.message.text if update.message else "No text"
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    if response:
-        logging.info(f"[{timestamp}] User: {username}, Text: '{user_text}', Bot Response: '{response}'")
-    else:
-        logging.info(f"[{timestamp}] User: {username}, Text: '{user_text}', Bot Response: None")
+    logging.info(f"[{timestamp}] User: {username}, Text: '{user_text}', Bot Response: '{response or 'None'}'")
+
+async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logging.error("Exception occurred:", exc_info=context.error)
+    if update and update.effective_user:
+        try:
+            await update.message.reply_text("Oops! Something went wrong. Please try again later.")
+        except TelegramError:
+            logging.error("Failed to send error message to user.")
 
 # All Commands
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -179,7 +190,7 @@ async def socialmedia(update: Update, context: ContextTypes.DEFAULT_TYPE):
 *Other:*
 
 *Email:* aryanraj7167ar@gmail.com
-*GitHub:* Not Provided
+*GitHub:* https://github.com/dev-aryan-com
 *Slowly:* 2NNQLJL
 
 Use */about* to know more about me.
@@ -191,7 +202,7 @@ async def contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
     response = """
 *Contact Me*
 
-**@aryan_raj_7167**
+**@aryan\_raj\_7167**
 
 *Email:* aryanraj7167ar@gmail.com 
 *Social Media:* /socialmedia
@@ -231,6 +242,7 @@ application.add_handler(CommandHandler('contact', contact))
 application.add_handler(CommandHandler('privacypolicy', privacypolicy))
 application.add_handler(MessageHandler(filters.COMMAND, unknown))
 application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, log_other_messages))
+application.add_error_handler(error_handler)
 
 # Run the bot
 if __name__ == "__main__":
