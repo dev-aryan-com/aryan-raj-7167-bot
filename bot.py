@@ -203,7 +203,7 @@ async def privacypolicy(update: Update, context: ContextTypes.DEFAULT_TYPE):
     response = """
 *Privacy Policy*
 
-http://aryanraj7167.html-5.me/telegram/bot/aryan-raj-7167-bot/privacypolicy
+https://www.aryan-raj-7167-bot.html-5.me/privacypolicy/
 	"""
     await update.message.reply_text(response, parse_mode='Markdown')
     await log_interaction(update, response)
