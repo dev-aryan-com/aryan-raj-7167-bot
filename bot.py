@@ -1,11 +1,12 @@
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from telegram.error import TelegramError
 import logging
 from datetime import datetime
 import random
 from dotenv import load_dotenv
 import os
-from telegram.error import TelegramError
+import unicodedata
 
 load_dotenv()  # Load variables from the .env file
 token = os.getenv("BOT_TOKEN")
@@ -52,6 +53,7 @@ Use */help* for all useful commands.
 
 ⚠️ *Important:* Read */privacypolicy* before continuing to the bot.
 
+⚠️ *Note:* This bot is under development. Expect occasional errors or downtime.
 """
     await update.message.reply_text(response, parse_mode='Markdown')
     await log_interaction(update, response)
@@ -62,6 +64,9 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
 */help* - List all commands.
 */hello* - Start a good conversation.
 */about* - All about me.
+*/biharlife* - About my Bihar life.
+*/schoollife* - About my School life.
+*/techjourney* - About my Tech journey.
 */socialmedia* - Get social media links.
 */contact* - Contact me.
 */privacypolicy* - Important to read before starting with bot.
@@ -70,7 +75,6 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await log_interaction(update, response)
 
 async def hello(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # List of random replies
     replies = [
         "I am Aryan Raj!",
         "Hey there! How can I assist you today?",
@@ -85,17 +89,19 @@ async def hello(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "2+2 != 5",
         "🐍",
         "🎂 2024/11/24 🎂",
-        "I love India"
+        "I love India",
+        "Hi"
     ]
     response = random.choice(replies)  # Select a random reply
     await update.message.reply_text(response, parse_mode='Markdown')
     await log_interaction(update, response)
 
 async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    response = """
-Hi there!
+    username = update.effective_user.username if update.effective_user.username else "there"
+    response = f"""
+Hi *@{username}*!
 
-It's me Aryan Raj from lovely India ❤️
+It's me *Aryan Raj* from lovely India ❤️
 In India I am from Bihar and I am *proud to be Bihari* 😌
 use */biharlife* for more info.
 
@@ -111,7 +117,7 @@ Use */socialmedia* to get my all Social Media Links.
 That's all I think about me.
 Have a great day ✨
 
-*Aryan 🙃 *
+*Aryan 🙃*
     """
     await update.message.reply_text(response, parse_mode='Markdown')
     await log_interaction(update, response)
@@ -225,9 +231,119 @@ async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(response, parse_mode='Markdown')
     await log_interaction(update, response)
 
-# Handle all other messages
+def is_emoji(character):
+    """Check if a character is an emoji."""
+    try:
+        return unicodedata.name(character).startswith("EMOJI") or \
+               "FACE" in unicodedata.name(character) or \
+               unicodedata.category(character) in ['So', 'Sk']
+    except ValueError:
+        return False
+
+def categorize_input(user_message):
+    has_text = False
+    has_emoji = False
+
+    for char in user_message:
+        if is_emoji(char):
+            has_emoji = True
+        elif char.isprintable() and not char.isspace():
+            has_text = True
+
+    if has_text and has_emoji:
+        return "Mixed"
+    elif has_text:
+        return "Text"
+    elif has_emoji:
+        return "Emoji"
+    else:
+        return "Unknown"
+
+# All questions
+name = [
+    "name?",
+    "what's your name?",
+    "what is your name?",
+    "may I know your name?",
+    "can you tell me your name?",
+    "who are you?",
+    "what should I call you?",
+    "how should I address you?",
+    "do you have a name?",
+    "what's your full name?",
+    "what is your first name?",
+    "what is your last name?",
+    "who am I talking to?",
+    "may I ask your name?",
+    "what's your nickname?",
+    "what do people call you?",
+    "what's the meaning of your name?"
+]
+
+age = [
+    "age?",
+    "what's your age?",
+    "how old are you?",
+    "may I ask your age?",
+    "can you tell me your age?",
+    "how many years old are you?",
+    "what is your birth year?",
+    "when were you born?",
+    "what age group do you belong to?",
+    "are you under 18?",
+    "are you over 18?",
+    "are you in your twenties?",
+    "are you older than me?",
+    "are you younger than me?",
+    "which age category are you in?",
+    "how old do you look?",
+    "what age do you feel?",
+    "are you a minor?",
+    "are you middle-aged?",
+    "are you a senior citizen?",
+    "how long have you been alive?"
+]
+
+# Handle specific text messages
 async def log_other_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await log_interaction(update)  # Log the user's message (no bot response)
+    user_message = update.message.text.lower()  # Convert to lowercase for case-insensitive matching
+    response = None  # Default response is None
+    user_emoji = categorize_input(user_message)
+    username = update.effective_user.username if update.effective_user.username else "there"
+    
+    # Define responses to specific messages
+    if user_emoji == "Emoji":
+        response = user_message
+    elif user_message == "hi":
+        await hello(update, context)
+        return
+    elif user_message == "hello":
+        await hello(update, context)
+        return
+    elif user_message == "how are you?":
+        response = f"""
+I'm just a bot, but I'm functioning perfectly! 🤖
+How about you @{username}?
+        """
+    else:
+        user_message = user_message.strip().rstrip('?') + '?'
+        if user_message in name:
+            response = """
+I'm *Aryan Raj*
+
+Use */about* to know more about me.
+            """
+        elif user_message in age:
+            response = "I'm *16*!"
+        else:
+            response = """I see you sent some text!
+I'm still *learning* to respond to all messages.
+            """
+
+    # Send the response if defined
+    if response:
+        await update.message.reply_text(response, parse_mode="Markdown")  # Use Markdown formatting
+    await log_interaction(update, response)  # Log the interaction
 
 # Add handlers
 application.add_handler(CommandHandler('start', start))
