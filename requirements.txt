@@ -1,7 +1,3 @@
 python-telegram-bot
 httpx
-dotenv
-logging
-random
-os
-unicodedata
+python-dotenv
