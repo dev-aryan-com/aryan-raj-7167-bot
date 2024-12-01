@@ -1,6 +1,6 @@
 # Telegram Bot 🤖
 
-A simple and customizable Telegram bot built using Python and the `python-telegram-bot` library. This bot responds to user messages and can be extended with additional features.
+A simple and customizable Telegram bot built using Python and the `python-telegram-bot` library. This bot responds to user messages and can be extended with additional features. Want to try it out? [Click here to try the bot](https://t.me/Aryan_Raj_7167_bot)
 
 ## Features 🚀
 
